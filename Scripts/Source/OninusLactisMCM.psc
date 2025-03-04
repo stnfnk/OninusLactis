@@ -44,91 +44,88 @@ int Function GetVersion()
 EndFunction
 
 Event OnConfigInit()
-  Init()
-  Pages = new string[2]
-  Pages[0] = "Settings"
-  Pages[1] = "Actor Offsets"
-  Debug.Trace("Oninus Lactis MCM: OnConfigInit complete")
+    Init()
+    Pages = new string[2]
+    Pages[0] = "$SETTINGS"
+    Pages[1] = "$ACTOR_OFFSETS"
+    Debug.Trace("Oninus Lactis MCM: OnConfigInit complete")
 EndEvent
 
 Function Init()
-  Debug.Trace("Oninus Lactis MCM: Init start")
-  Parent.OnGameReload()
-  Debug.Trace("Oninus Lactis MCM: Parent.OnGameReload complete")
-  if !OninusLactisQuest
-    Debug.Trace("Oninus Lactis MCM: OninusLactisQuest property is not set!")
-    Return
-  endif
-  Main = OninusLactisQuest as OninusLactis
-  if !Main
-    Debug.Trace("Oninus Lactis MCM: Failed to cast OninusLactisQuest to OninusLactis")
-    Return
-  endif
-  Debug.Trace("Oninus Lactis MCM: Init complete successfully")
+    Debug.Trace("Oninus Lactis MCM: Init start")
+    Parent.OnGameReload()
+    Debug.Trace("Oninus Lactis MCM: Parent.OnGameReload complete")
+    if !OninusLactisQuest
+        Debug.Trace("Oninus Lactis MCM: OninusLactisQuest property is not set!")
+        Return
+    endif
+    Main = OninusLactisQuest as OninusLactis
+    if !Main
+        Debug.Trace("Oninus Lactis MCM: Failed to cast OninusLactisQuest to OninusLactis")
+        Return
+    endif
+    Debug.Trace("Oninus Lactis MCM: Init complete successfully")
 EndFunction
 
 Event OnVersionUpdate(int a_version)
-  ; a_version is the new version, CurrentVersion is the old version
-  if (a_version >= 2 && CurrentVersion < 2)
-    ; Debug.Trace(self + ": Updating script to version 2")
-    Pages = new string[2]
-    Pages[0] = "Settings"
-    Pages[1] = "Actor Offsets"
-  endIf
+    ; a_version is the new version, CurrentVersion is the old version
+    if (a_version >= 2 && CurrentVersion < 2)
+        Pages = new string[2]
+        Pages[0] = "$SETTINGS"
+        Pages[1] = "$ACTOR_OFFSETS"
+    endIf
 EndEvent
 
 Event OnConfigOpen()
-  {Called when this config menu is opened}
+    {Called when this config menu is opened}
 EndEvent
 
 Event OnConfigClose()
-  {Called when this config menu is closed}
+    {Called when this config menu is closed}
 EndEvent
 
 Event OnPageReset(string page)
   Main.CleanupArmorRefs()
-  if Page == "" || Page == "Settings"
+  if Page == "" || Page == "$SETTINGS"
     SetCursorFillMode(TOP_TO_BOTTOM)
-    AddHeaderOption("Keyboard (Manual mode)")        
-    optionKeyStartLactating = AddKeyMapOption("Toggle nipple squirt key", Main.StartLactatingKey)
-    AddHeaderOption("Player Nipple Offset")
-    optionOffsetLeftX = AddSliderOption("Left / Right", Main.NippleOffsetL[0], "{2}")        
-    optionOffsetLeftY = AddSliderOption("Up / Down", Main.NippleOffsetL[2], "{2}")
-    optionOffsetLeftZ = AddSliderOption("Back / Forth", Main.NippleOffsetL[1], "{2}")
-    optionEmitterScale = AddSliderOption("Emitter scale", Main.EmitterScale, "{2}")
+    AddHeaderOption("$KEYBOARD_MANUAL_MODE")        
+    optionKeyStartLactating = AddKeyMapOption("$TOGGLE_NIPPLE_SQUIRT_KEY", Main.StartLactatingKey)
+    AddHeaderOption("$PLAYER_NIPPLE_OFFSET")
+    optionOffsetLeftX = AddSliderOption("$LEFT_RIGHT", Main.NippleOffsetL[0], "{2}")        
+    optionOffsetLeftY = AddSliderOption("$UP_DOWN", Main.NippleOffsetL[2], "{2}")
+    optionOffsetLeftZ = AddSliderOption("$BACK_FORTH", Main.NippleOffsetL[1], "{2}")
+    optionEmitterScale = AddSliderOption("$EMITTER_SCALE", Main.EmitterScale, "{2}")
     SetCursorPosition(1)
-    AddHeaderOption("Global settings")
-    optionDebugAxisEnabled = AddToggleOption("Enable debug axis", Main.DebugAxisEnabled)
-    optionGlobalEmitterScale = AddSliderOption("Global emitter scale", Main.GlobalEmitterScale, "{2}")    
-    optionNippleLeakEnabled = AddToggleOption("Enable nipple leak (CBBE EffectShader)", Main.NippleLeakEnabled)
-    AddHeaderOption("Maintenance")
-    ; optionRandomYRotEnabled = AddToggleOption("Enable random Y rotation", Main.UseRandomYRotation)
-    ; optionRandomEmitterScaleEnabled = AddToggleOption("Enable random emitter scale", Main.UseRandomEmitterScale)
-    ; optionRandomEmitterDeactivationEnabled = AddToggleOption("Enable random emitter deactivation", Main.UseRandomEmitterDeactivation)   
+    AddHeaderOption("$GLOBAL_SETTINGS")
+    optionDebugAxisEnabled = AddToggleOption("$ENABLE_DEBUG_AXIS", Main.DebugAxisEnabled)
+    optionGlobalEmitterScale = AddSliderOption("$GLOBAL_EMITTER_SCALE", Main.GlobalEmitterScale, "{2}")    
+    optionNippleLeakEnabled = AddToggleOption("$ENABLE_NIPPLE_LEAK", Main.NippleLeakEnabled)
+    AddHeaderOption("$MAINTENANCE")
     
-    AddTextOption("Active nipple squirts", Main.GetArmoredActorsCount() )
-    optionResetAll = AddTextOption("Reset all", "Click")
-    AddHeaderOption("Export / Import MCM Settings")
-    optionExportMCMSettings = AddTextOption("Export MCM settings", "Click")   
-    optionImportMCMSettings = AddTextOption("Import MCM settings", "Click")   
-    optionUninstall = AddTextOption("Uninstall Oninus Lactis", "Uninstall")
-    AddTextOption("Version", Main.GetVersion(), OPTION_FLAG_DISABLED)
-  elseif Page == "Actor Offsets"    
+    AddTextOption("$ACTIVE_NIPPLE_SQUIRTS", Main.GetArmoredActorsCount())
+    optionResetAll = AddTextOption("$RESET_ALL", "$CLICK")
+    AddHeaderOption("$EXPORT_IMPORT_MCM_SETTINGS")
+    optionExportMCMSettings = AddTextOption("$EXPORT_MCM_SETTINGS", "$CLICK")   
+    optionImportMCMSettings = AddTextOption("$IMPORT_MCM_SETTINGS", "$CLICK")   
+    AddTextOption("$VERSION", Main.GetVerboseVersion(), OPTION_FLAG_DISABLED)
+    optionUninstall = AddTextOption("$UNINSTALL_ONINUS_LACTIS", "$UNINSTALL")
+    
+  elseif Page == "$ACTOR_OFFSETS"    
     SetCursorFillMode(TOP_TO_BOTTOM)
-    AddHeaderOption("Actor Nipple Offsets")
+    AddHeaderOption("$ACTOR_NIPPLE_OFFSETS")
     Actor actorRef = GetTargetActor("Crosshair")
     int flags = 0
     if actorRef==None
       flags = OPTION_FLAG_DISABLED
     endif
-    optionNpcConsole = AddTextOption("Crosshair: " + ActorName(actorRef), "Select", flags)
+    optionNpcConsole = AddTextOption(">>> " + ActorName(actorRef), "$SELECT", flags)
     AddEmptyOption()
-    AddHeaderOption("Stored actor offsets")
+    AddHeaderOption("$STORED_ACTOR_OFFSETS")
     int npcCount = Main.actorStorage.GetNpcStorageCount()
     int i=0
     optionNpcActors = Utility.CreateIntArray(npcCount)
     while i<npcCount
-      optionNpcActors[i] = AddTextOption(ActorName(Main.actorStorage.GetNpcActor(i)), "Select")
+      optionNpcActors[i] = AddTextOption(ActorName(Main.actorStorage.GetNpcActor(i)), "$SELECT")
       i = i+1
     endwhile
 
@@ -139,15 +136,16 @@ Event OnPageReset(string page)
         Main.actorStorage.InitNpcStorage(selectedActor)
       endif
       float[] offset = Main.actorStorage.GetNpcOffset(selectedActor)
-      optionNpcOffsetLeftX = AddSliderOption("NPC Left / Right", offset[0], "{2}")        
-          optionNpcOffsetLeftY = AddSliderOption("NPC Up / Down", offset[2], "{2}")
-          optionNpcOffsetLeftZ = AddSliderOption("NPC Back / Forth", offset[1], "{2}")
-      optionNpcScale = AddSliderOption("NPC Emitter Scale", Main.actorStorage.GetNpcScale(selectedActor), "{2}")
+      optionNpcOffsetLeftX = AddSliderOption("$LEFT_RIGHT", offset[0], "{2}")        
+      optionNpcOffsetLeftY = AddSliderOption("$UP_DOWN", offset[2], "{2}")
+      optionNpcOffsetLeftZ = AddSliderOption("$BACK_FORTH", offset[1], "{2}")
+      optionNpcScale = AddSliderOption("$EMITTER_SCALE", Main.actorStorage.GetNpcScale(selectedActor), "{2}")
       AddEmptyOption()
-      optionNpcDelete = AddTextOption("Delete actor offsets", "Delete")
+      optionNpcDelete = AddTextOption("$DELETE_ACTOR_OFFSETS", "$DELETE")
     endif
   endif
 EndEvent
+
 
 Event OnOptionSelect(int option)
   string[] menuOptions = None ; Initialize empty menu options
@@ -170,28 +168,28 @@ Event OnOptionSelect(int option)
     Main.StopAllNippleSquirts()   
   elseif option == optionUninstall
     Main.Uninstall()
-    ShowMessage("You should save and exit the game now. Then disable the Lactis mod, start game, reload the save. Walk around, wait some time, save and exit game. Then use Resaver to clean the save.", false)
+    ShowMessage("$MOD_UNINSTALLED", false)
   elseif option == optionExportMCMSettings    
-    if ShowMessage("Oninus Lactis MCM setttings will be exported to file 'SKSE/Plugins/Lactis/MCM_Settings.json'", a_withCancel=true) == true
+    if ShowMessage("$MCM_EXPORT_CONFIRM", a_withCancel=true) == true
       SetOptionFlags(optionExportMCMSettings, OPTION_FLAG_DISABLED)
       bool result = ExportSettings()
       if result == true
-        ShowMessage("Oninus Lactis MCM settings exported succesfully. You can find the file at 'SKSE/Plugins/Lactis/MCM_Settings.json'", false)
+        ShowMessage("$MCM_EXPORT_SUCCESS", false)
       else
-        ShowMessage("Oninus Lactis MCM settings export failed.", false)
+        ShowMessage("$MCM_EXPORT_FAILED", false)
       endIf
       SetOptionFlags(optionExportMCMSettings, OPTION_FLAG_NONE)
     endIf       
   elseif option == optionImportMCMSettings
-    if ShowMessage("Import Oninus Lactis MCM settings from 'SKSE/Plugins/Lactis/MCM_Settings.json'?", true) == true
+    if ShowMessage("$MCM_IMPORT_CONFIRM", true) == true
       SetOptionFlags(optionImportMCMSettings, OPTION_FLAG_DISABLED)     
       int result = ImportSettings()
       if result==1
-        ShowMessage("Oninus Lactis MCM settings imported succesfully from 'SKSE/Plugins/Lactis/MCM_Settings.json'.", false)
+        ShowMessage("$MCM_IMPORT_SUCCESS", false)
       elseIf result == 0
-        ShowMessage("Oninus Lactis MCM settings file not found. Check if the file exists at 'SKSE/Plugins/Lactis/MCM_Settings.json'", false)
+        ShowMessage("$MCM_IMPORT_FILE_NOT_FOUND", false)
       else
-        ShowMessage("Oninus Lactis MCM settings import failed.", false)
+        ShowMessage("$MCM_IMPORT_FAILED", false)
       endIf
       SetOptionFlags(optionImportMCMSettings, OPTION_FLAG_NONE)
     endIf   
@@ -200,7 +198,7 @@ Event OnOptionSelect(int option)
     if actorRef && actorRef.GetActorBase().GetSex() == 1  ; Check if female
       SetSelectedActor(actorRef)
     else
-      Debug.Notification("Oninus Lactis: Selected actor is not a valid female NPC")
+      Debug.Notification("$INVALID_FEMALE_NPC")
     endif
   elseif optionNpcActors.Find(option)>=0
     SetSelectedActor(Main.actorStorage.GetNpcActor(optionNpcActors.Find(option)))
@@ -342,33 +340,29 @@ EndEvent
 Event OnOptionHighlight(int option)
   {Called when the user highlights an option}
   if option == optionKeyStartLactating
-    SetInfoText("Key for toggling nipple squirting on/off on the player.")
+    SetInfoText("$HELP_TOGGLE_KEY")
   elseIf option == optionOffsetLeftX || option == optionOffsetLeftY || option == optionOffsetLeftZ
-    SetInfoText("Offset for the player's nipple squirt emitter origin. Adjust to match the player's body. Note that the offset will be used for both breasts, x offset will be adjusted for each side.")
-  ; elseIf option == optionOffsetRightX || option == optionOffsetRightY || option == optionOffsetRightZ
-  ; SetInfoText("Offset for the right nipple squirt emitter origin. Adjust to match the player's body.")
+    SetInfoText("$HELP_PLAYER_OFFSET")
   elseIf option == optionEmitterScale
-    SetInfoText("Scaling for the player's nipple squirt emitter.")
+    SetInfoText("$HELP_PLAYER_EMITTER_SCALE")
   elseif option == optionGlobalEmitterScale
-    SetInfoText("Global emitter scale for all left and right emitters. Applies to all actors including the player.")
+    SetInfoText("$HELP_GLOBAL_EMITTER_SCALE")
   elseif option == optionNippleLeakEnabled
-    SetInfoText("Enables an CBBE overlay texture which simulates nipple leak.")
+    SetInfoText("$HELP_NIPPLE_LEAK")
   elseif option == optionDebugAxisEnabled
-    SetInfoText("Enables a debug axis for nipple offset adjustments.")
+    SetInfoText("$HELP_DEBUG_AXIS")
   elseif option == optionRandomYRotEnabled || option == optionRandomEmitterScaleEnabled || option == optionRandomEmitterDeactivationEnabled
-    SetInfoText("Experimental feature which may result in unpredictable behaviour. Dont't use it.")
+    SetInfoText("$HELP_EXPERIMENTAL_FEATURE")
   elseif option == optionResetAll
-    SetInfoText("Removes nipple squirt effect from all actors.")
-  ;elseif option == optionNpcConsole
-  ;  SetInfoText("Click this entry to set the current console selection as the selected actor. Only works for female actors.")
+    SetInfoText("$HELP_RESET_ALL")
   elseIf optionNpcActors.Find(option)>=0
-    SetInfoText("Click this entry to set as the selected actor.")
+    SetInfoText("$HELP_SELECT_ACTOR")
   elseif option == optionNpcOffsetLeftX || option == optionNpcOffsetLeftY || option == optionNpcOffsetLeftZ
-    SetInfoText("Offset for the selected actor's nipple squirt emitter origin. Adjust to match the selected actor's body. Note that the offset will be used for both breasts, x offset will be adjusted for each side.")    
+    SetInfoText("$HELP_NPC_OFFSET")    
   elseif option == optionNpcScale
-    SetInfoText("Scaling for the selected actor's nipple squirt emitter.")
+    SetInfoText("$HELP_NPC_EMITTER_SCALE")
   elseif option == optionNpcDelete
-    SetInfoText("Delete the selected actor's values and remove the actor from the list of stored actors.")
+    SetInfoText("$HELP_DELETE_ACTOR")
   else 
     SetInfoText("")
   endIf
@@ -452,9 +446,10 @@ string Function GetCustomControl(int option)
   Debug.Trace("Oninus Lactis MCM: GetCustomControl called for " + option)
   string[] result = new string[1]
   if option == optionKeyStartLactating
-    result[0] = "Toggle nipple squirt key"
+    result[0] = "$TOGGLE_NIPPLE_SQUIRT_KEY"
+    return result
   endif
-  return ""
+  return result
 EndFunction
 
 Function FormatCustomControl(string fid, string value)

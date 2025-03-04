@@ -39,7 +39,7 @@ Bool Property UseRandomYRotation Auto
 Bool Property UseRandomEmitterScale Auto
 Bool Property UseRandomEmitterDeactivation Auto
 
-string fVersion = "(v2.0) for Dripping When Aroused NG"
+string fVersion = "2.0 for DW-NG"
 
 Actor[] armorActors
 ObjectReference[] armorRefsLeft
@@ -59,6 +59,10 @@ EndEvent
 
 int Function GetVersion()
   return 2
+EndFunction
+
+string Function GetVerboseVersion()
+  return fVersion
 EndFunction
 
 Function Maintenance()
@@ -169,7 +173,8 @@ EndFunction
 ; The effect will automatically stop and removed from the actor after the given 
 ; duration.
 Function PlayNippleSquirt(Actor actorRef, float duration, int level=0)
-  Debug.Trace("Oninus Lactis: Playing level: " + level + " nipple squirt for " + duration + " seconds (Actor: " + actorRef + ")")
+  int inclvl = (level + 1)
+  Debug.Trace("Oninus Lactis: Playing level: " + inclvl + " nipple squirt for " + duration + " seconds (Actor: " + actorRef.GetDisplayName() + ")")
   StartNippleSquirt(actorRef, level)
   Utility.Wait(duration)
   StopNippleSquirt(actorRef)
@@ -190,7 +195,6 @@ EndFunction
 ; 
 
 LactisNippleSquirtArmor Function StartNippleSquirtLeft(Actor actorRef, int level=0)
-  ; Console("StartNippleSquirtLeft")  
   LactisNippleSquirtArmor armorRef = actorRef.PlaceAtMe(NippleSquirtArmor, 1, true) as LactisNippleSquirtArmor  
   armorRef.ActorRef = actorRef
   armorRef.SetLevel(level, false)
@@ -208,7 +212,6 @@ LactisNippleSquirtArmor Function StartNippleSquirtLeft(Actor actorRef, int level
 EndFunction
 
 Function StopNippleSquirtInternal(Actor actorRef, LactisNippleSquirtArmor armorRef)
-  ; Console("StopNippleSquirtInternal on actor " + actorRef + ", armorRef=" + armorRef + ", armorRightRef=" + armorRightRef)
   if armorRef!=None
     actorRef.RemoveItem(armorRef, 1, true)
   endif
