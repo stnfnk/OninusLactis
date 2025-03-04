@@ -7,7 +7,7 @@ Rebuilt for Dripping When Aroused NG by stnfnk 2025
 [Original Mod](https://www.nexusmods.com/skyrimspecialedition/mods/54017)
 
 ## Requirements
-+ Skyrim: Special Edition (1.5.39+)
++ Skyrim: Special Edition (1.5.39+) or VR
 + [SKSE64](https://skse.silverlock.org/)
 + [PapyrusUtil SE v3.9+](https://www.nexusmods.com/skyrimspecialedition/mods/13048?tab=files) 
 + [CBBE 3BA (3BBB)](https://www.nexusmods.com/skyrimspecialedition/mods/30174) optional
@@ -65,11 +65,6 @@ user who confirmed that this works, too.
 + When using SMP nipple offset is somehow delayed (CBPC works better)
 + During OStim scenes: Flickering face effects when using face lights. 
   Affects player and NPCs.
-+ Not tested in 1st person mode. Might work, might be not.
-+ It also might happen that you will not be able to stop the nipple squirt of 
-  an NPC by using the toggle key. As a last resort you can try to 
-  **Right Shift + Toggle Key"** on the NPC. This should remove the effect but can
-  lead to save game bloat. (feature will be available in >v0.31)
 
 ## MCM configuration
 Use MCM to configure nipple offset and scale for the player and NPCs. You can 
@@ -84,8 +79,7 @@ not naked.
 ### Settings page
 
 #### Toggle nipple squirt key
-Key for toggling nipple squirting on/off on the player. Does not work during 
-OStim scenes.
+Set key to toggle nipples squirting on a target actor or the player.
 
 #### Player Nipple Offset
 Player offset for the nipple squirt emitter origin. Adjust to match the 
@@ -97,7 +91,7 @@ Nipple squirt even when actor is not naked. This might help with revealing
 armors/clothing.
 
 #### Enable nipple leak (CBBE EffectShader)
-Enables an CBBE overlay texture which simulates nipple leak.
+Enables an CBBE overlay texture which simulates nipple leak. A UNP-B replacement texture is also included.
 
 #### Enable debug axis
 Enables a debug axis for nipple offset adjustments. Applies to player and NPCs.

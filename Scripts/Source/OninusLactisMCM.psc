@@ -46,8 +46,8 @@ EndFunction
 Event OnConfigInit()
     Init()
     Pages = new string[2]
-    Pages[0] = "$SETTINGS"
-    Pages[1] = "$ACTOR_OFFSETS"
+    Pages[0] = "$OL_SETTINGS"
+    Pages[1] = "$OL_ACTOR_OFFSETS"
     Debug.Trace("Oninus Lactis MCM: OnConfigInit complete")
 EndEvent
 
@@ -71,8 +71,8 @@ Event OnVersionUpdate(int a_version)
     ; a_version is the new version, CurrentVersion is the old version
     if (a_version >= 2 && CurrentVersion < 2)
         Pages = new string[2]
-        Pages[0] = "$SETTINGS"
-        Pages[1] = "$ACTOR_OFFSETS"
+        Pages[0] = "$OL_SETTINGS"
+        Pages[1] = "$OL_ACTOR_OFFSETS"
     endIf
 EndEvent
 
@@ -86,46 +86,45 @@ EndEvent
 
 Event OnPageReset(string page)
   Main.CleanupArmorRefs()
-  if Page == "" || Page == "$SETTINGS"
+  if Page == "" || Page == "$OL_SETTINGS"
     SetCursorFillMode(TOP_TO_BOTTOM)
-    AddHeaderOption("$KEYBOARD_MANUAL_MODE")        
-    optionKeyStartLactating = AddKeyMapOption("$TOGGLE_NIPPLE_SQUIRT_KEY", Main.StartLactatingKey)
-    AddHeaderOption("$PLAYER_NIPPLE_OFFSET")
-    optionOffsetLeftX = AddSliderOption("$LEFT_RIGHT", Main.NippleOffsetL[0], "{2}")        
-    optionOffsetLeftY = AddSliderOption("$UP_DOWN", Main.NippleOffsetL[2], "{2}")
-    optionOffsetLeftZ = AddSliderOption("$BACK_FORTH", Main.NippleOffsetL[1], "{2}")
-    optionEmitterScale = AddSliderOption("$EMITTER_SCALE", Main.EmitterScale, "{2}")
+    AddHeaderOption("$OL_KEYBOARD_MANUAL_MODE")        
+    optionKeyStartLactating = AddKeyMapOption("$OL_TOGGLE_NIPPLE_SQUIRT_KEY", Main.StartLactatingKey)
+    AddHeaderOption("$OL_PLAYER_NIPPLE_OFFSET")
+    optionOffsetLeftX = AddSliderOption("$OL_LEFT_RIGHT", Main.NippleOffsetL[0], "{2}")        
+    optionOffsetLeftY = AddSliderOption("$OL_UP_DOWN", Main.NippleOffsetL[2], "{2}")
+    optionOffsetLeftZ = AddSliderOption("$OL_BACK_FORTH", Main.NippleOffsetL[1], "{2}")
+    optionEmitterScale = AddSliderOption("$OL_EMITTER_SCALE", Main.EmitterScale, "{2}")
     SetCursorPosition(1)
-    AddHeaderOption("$GLOBAL_SETTINGS")
-    optionDebugAxisEnabled = AddToggleOption("$ENABLE_DEBUG_AXIS", Main.DebugAxisEnabled)
-    optionGlobalEmitterScale = AddSliderOption("$GLOBAL_EMITTER_SCALE", Main.GlobalEmitterScale, "{2}")    
-    optionNippleLeakEnabled = AddToggleOption("$ENABLE_NIPPLE_LEAK", Main.NippleLeakEnabled)
-    AddHeaderOption("$MAINTENANCE")
+    AddHeaderOption("$OL_GLOBAL_SETTINGS")
+    optionDebugAxisEnabled = AddToggleOption("$OL_ENABLE_DEBUG_AXIS", Main.DebugAxisEnabled)
+    optionGlobalEmitterScale = AddSliderOption("$OL_GLOBAL_EMITTER_SCALE", Main.GlobalEmitterScale, "{2}")    
+    optionNippleLeakEnabled = AddToggleOption("$OL_ENABLE_NIPPLE_LEAK", Main.NippleLeakEnabled)
+    AddHeaderOption("$OL_MAINTENANCE")
+    AddTextOption("$OL_ACTIVE_NIPPLE_SQUIRTS", Main.GetArmoredActorsCount())
+    optionResetAll = AddTextOption("$OL_RESET_ALL", "$OL_CLICK")
+    AddHeaderOption("$OL_EXPORT_IMPORT_MCM_SETTINGS")
+    optionImportMCMSettings = AddTextOption("$OL_IMPORT_MCM_SETTINGS", "$OL_CLICK") 
+    optionExportMCMSettings = AddTextOption("$OL_EXPORT_MCM_SETTINGS", "$OL_CLICK")   
+    AddTextOption("$OL_VERSION", Main.GetVerboseVersion(), OPTION_FLAG_DISABLED)
+    optionUninstall = AddTextOption("$OL_UNINSTALL_ONINUS_LACTIS", "$OL_UNINSTALL")
     
-    AddTextOption("$ACTIVE_NIPPLE_SQUIRTS", Main.GetArmoredActorsCount())
-    optionResetAll = AddTextOption("$RESET_ALL", "$CLICK")
-    AddHeaderOption("$EXPORT_IMPORT_MCM_SETTINGS")
-    optionExportMCMSettings = AddTextOption("$EXPORT_MCM_SETTINGS", "$CLICK")   
-    optionImportMCMSettings = AddTextOption("$IMPORT_MCM_SETTINGS", "$CLICK")   
-    AddTextOption("$VERSION", Main.GetVerboseVersion(), OPTION_FLAG_DISABLED)
-    optionUninstall = AddTextOption("$UNINSTALL_ONINUS_LACTIS", "$UNINSTALL")
-    
-  elseif Page == "$ACTOR_OFFSETS"    
+  elseif Page == "$OL_ACTOR_OFFSETS"    
     SetCursorFillMode(TOP_TO_BOTTOM)
-    AddHeaderOption("$ACTOR_NIPPLE_OFFSETS")
+    AddHeaderOption("$OL_ACTOR_NIPPLE_OFFSETS")
     Actor actorRef = GetTargetActor("Crosshair")
     int flags = 0
     if actorRef==None
       flags = OPTION_FLAG_DISABLED
     endif
-    optionNpcConsole = AddTextOption(">>> " + ActorName(actorRef), "$SELECT", flags)
+    optionNpcConsole = AddTextOption(">>> " + ActorName(actorRef), "$OL_SELECT", flags)
     AddEmptyOption()
-    AddHeaderOption("$STORED_ACTOR_OFFSETS")
+    AddHeaderOption("$OL_STORED_ACTOR_OFFSETS")
     int npcCount = Main.actorStorage.GetNpcStorageCount()
     int i=0
     optionNpcActors = Utility.CreateIntArray(npcCount)
     while i<npcCount
-      optionNpcActors[i] = AddTextOption(ActorName(Main.actorStorage.GetNpcActor(i)), "$SELECT")
+      optionNpcActors[i] = AddTextOption(ActorName(Main.actorStorage.GetNpcActor(i)), "$OL_SELECT")
       i = i+1
     endwhile
 
@@ -136,12 +135,12 @@ Event OnPageReset(string page)
         Main.actorStorage.InitNpcStorage(selectedActor)
       endif
       float[] offset = Main.actorStorage.GetNpcOffset(selectedActor)
-      optionNpcOffsetLeftX = AddSliderOption("$LEFT_RIGHT", offset[0], "{2}")        
-      optionNpcOffsetLeftY = AddSliderOption("$UP_DOWN", offset[2], "{2}")
-      optionNpcOffsetLeftZ = AddSliderOption("$BACK_FORTH", offset[1], "{2}")
-      optionNpcScale = AddSliderOption("$EMITTER_SCALE", Main.actorStorage.GetNpcScale(selectedActor), "{2}")
+      optionNpcOffsetLeftX = AddSliderOption("$OL_LEFT_RIGHT", offset[0], "{2}")        
+      optionNpcOffsetLeftY = AddSliderOption("$OL_UP_DOWN", offset[2], "{2}")
+      optionNpcOffsetLeftZ = AddSliderOption("$OL_BACK_FORTH", offset[1], "{2}")
+      optionNpcScale = AddSliderOption("$OL_EMITTER_SCALE", Main.actorStorage.GetNpcScale(selectedActor), "{2}")
       AddEmptyOption()
-      optionNpcDelete = AddTextOption("$DELETE_ACTOR_OFFSETS", "$DELETE")
+      optionNpcDelete = AddTextOption("$OL_DELETE_ACTOR_OFFSETS", "$OL_DELETE")
     endif
   endif
 EndEvent
@@ -168,28 +167,28 @@ Event OnOptionSelect(int option)
     Main.StopAllNippleSquirts()   
   elseif option == optionUninstall
     Main.Uninstall()
-    ShowMessage("$MOD_UNINSTALLED", false)
+    ShowMessage("$OL_MOD_UNINSTALLED", false)
   elseif option == optionExportMCMSettings    
-    if ShowMessage("$MCM_EXPORT_CONFIRM", a_withCancel=true) == true
+    if ShowMessage("$OL_MCM_EXPORT_CONFIRM", a_withCancel=true) == true
       SetOptionFlags(optionExportMCMSettings, OPTION_FLAG_DISABLED)
       bool result = ExportSettings()
       if result == true
-        ShowMessage("$MCM_EXPORT_SUCCESS", false)
+        ShowMessage("$OL_MCM_EXPORT_SUCCESS", false)
       else
-        ShowMessage("$MCM_EXPORT_FAILED", false)
+        ShowMessage("$OL_MCM_EXPORT_FAILED", false)
       endIf
       SetOptionFlags(optionExportMCMSettings, OPTION_FLAG_NONE)
     endIf       
   elseif option == optionImportMCMSettings
-    if ShowMessage("$MCM_IMPORT_CONFIRM", true) == true
+    if ShowMessage("$OL_MCM_IMPORT_CONFIRM", true) == true
       SetOptionFlags(optionImportMCMSettings, OPTION_FLAG_DISABLED)     
       int result = ImportSettings()
       if result==1
-        ShowMessage("$MCM_IMPORT_SUCCESS", false)
+        ShowMessage("$OL_MCM_IMPORT_SUCCESS", false)
       elseIf result == 0
-        ShowMessage("$MCM_IMPORT_FILE_NOT_FOUND", false)
+        ShowMessage("$OL_MCM_IMPORT_FILE_NOT_FOUND", false)
       else
-        ShowMessage("$MCM_IMPORT_FAILED", false)
+        ShowMessage("$OL_MCM_IMPORT_FAILED", false)
       endIf
       SetOptionFlags(optionImportMCMSettings, OPTION_FLAG_NONE)
     endIf   
@@ -198,7 +197,7 @@ Event OnOptionSelect(int option)
     if actorRef && actorRef.GetActorBase().GetSex() == 1  ; Check if female
       SetSelectedActor(actorRef)
     else
-      Debug.Notification("$INVALID_FEMALE_NPC")
+      Debug.Notification("$OL_INVALID_FEMALE_NPC")
     endif
   elseif optionNpcActors.Find(option)>=0
     SetSelectedActor(Main.actorStorage.GetNpcActor(optionNpcActors.Find(option)))
@@ -207,6 +206,7 @@ Event OnOptionSelect(int option)
     SetSelectedActor(None)
   endIf
 EndEvent
+
 
 Event OnOptionSliderOpen(int option)
   Actor actorRef = GetSelectedActor()
@@ -340,29 +340,29 @@ EndEvent
 Event OnOptionHighlight(int option)
   {Called when the user highlights an option}
   if option == optionKeyStartLactating
-    SetInfoText("$HELP_TOGGLE_KEY")
+    SetInfoText("$OL_HELP_TOGGLE_KEY")
   elseIf option == optionOffsetLeftX || option == optionOffsetLeftY || option == optionOffsetLeftZ
-    SetInfoText("$HELP_PLAYER_OFFSET")
+    SetInfoText("$OL_HELP_PLAYER_OFFSET")
   elseIf option == optionEmitterScale
-    SetInfoText("$HELP_PLAYER_EMITTER_SCALE")
+    SetInfoText("$OL_HELP_PLAYER_EMITTER_SCALE")
   elseif option == optionGlobalEmitterScale
-    SetInfoText("$HELP_GLOBAL_EMITTER_SCALE")
+    SetInfoText("$OL_HELP_GLOBAL_EMITTER_SCALE")
   elseif option == optionNippleLeakEnabled
-    SetInfoText("$HELP_NIPPLE_LEAK")
+    SetInfoText("$OL_HELP_NIPPLE_LEAK")
   elseif option == optionDebugAxisEnabled
-    SetInfoText("$HELP_DEBUG_AXIS")
+    SetInfoText("$OL_HELP_DEBUG_AXIS")
   elseif option == optionRandomYRotEnabled || option == optionRandomEmitterScaleEnabled || option == optionRandomEmitterDeactivationEnabled
-    SetInfoText("$HELP_EXPERIMENTAL_FEATURE")
+    SetInfoText("$OL_HELP_EXPERIMENTAL_FEATURE")
   elseif option == optionResetAll
-    SetInfoText("$HELP_RESET_ALL")
+    SetInfoText("$OL_HELP_RESET_ALL")
   elseIf optionNpcActors.Find(option)>=0
-    SetInfoText("$HELP_SELECT_ACTOR")
+    SetInfoText("$OL_HELP_SELECT_ACTOR")
   elseif option == optionNpcOffsetLeftX || option == optionNpcOffsetLeftY || option == optionNpcOffsetLeftZ
-    SetInfoText("$HELP_NPC_OFFSET")    
+    SetInfoText("$OL_HELP_NPC_OFFSET")    
   elseif option == optionNpcScale
-    SetInfoText("$HELP_NPC_EMITTER_SCALE")
+    SetInfoText("$OL_HELP_NPC_EMITTER_SCALE")
   elseif option == optionNpcDelete
-    SetInfoText("$HELP_DELETE_ACTOR")
+    SetInfoText("$OL_HELP_DELETE_ACTOR")
   else 
     SetInfoText("")
   endIf
@@ -446,7 +446,7 @@ string Function GetCustomControl(int option)
   Debug.Trace("Oninus Lactis MCM: GetCustomControl called for " + option)
   string[] result = new string[1]
   if option == optionKeyStartLactating
-    result[0] = "$TOGGLE_NIPPLE_SQUIRT_KEY"
+    result[0] = "$OL_TOGGLE_NIPPLE_SQUIRT_KEY"
     return result
   endif
   return result
