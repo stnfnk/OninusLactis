@@ -6,7 +6,9 @@
 ; ███████║╚██████╔╝╚██████╔╝██║██║  ██║   ██║       ██║  ██║██║  ██║██║ ╚═╝ ██║╚██████╔╝██║  ██║
 ; ╚══════╝ ╚══▀▀═╝  ╚═════╝ ╚═╝╚═╝  ╚═╝   ╚═╝       ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝
                                                                                               
-Scriptname LactisNippleSquirtArmor extends ObjectReference  
+Scriptname LactisNippleSquirtArmor extends ObjectReference
+
+OninusLactis Property QuestScript Auto
  
 Actor Property ActorRef Auto
 Float[] Property NippleOffset Auto
@@ -43,29 +45,18 @@ ArmorAddon armorAAR
 int currentLevel
 
 Event OnInit()    
-    If self == None
-        return
-    EndIf
-    
-    baseObject = self.GetBaseObject()
-    armorAA = (baseObject as Armor).GetNthArmorAddon(0)
-    armorAAR = (baseObject as Armor).GetNthArmorAddon(1)
-    ; OnInit the actorRef will always be the default value set in the CK (set to PlayerRef there)    
-    ; Console("OnInit: actorName=" + ", self=" + self + ", baseObject=" + baseObject + ", ActorRef=" + ActorRef + ", EmitterScale=" + EmitterScale)
-    ; Thus the update here will be wasted when the actor is not the player after container change    
-    
-    rot = new Float[3]
+  ; Initialize arrays
+  rot = new Float[3]
+  LevelNifsL = new String[3]    
+  LevelNifsL[0] = "OninusLactis/nipplesquirt-left-lvl1.nif"
+  LevelNifsL[1] = "OninusLactis/nipplesquirt-left-lvl2.nif"
+  LevelNifsL[2] = "OninusLactis/nipplesquirt-left-lvl3.nif"
+  LevelNifsR = new String[3]
+  LevelNifsR[0] = "OninusLactis/nipplesquirt-right-lvl1.nif"
+  LevelNifsR[1] = "OninusLactis/nipplesquirt-right-lvl2.nif"
+  LevelNifsR[2] = "OninusLactis/nipplesquirt-right-lvl3.nif"
 
-    LevelNifsL = new String[3]    
-    LevelNifsL[0] = "OninusLactis/nipplesquirt-left-lvl1.nif"
-    LevelNifsL[1] = "OninusLactis/nipplesquirt-left-lvl2.nif"
-    LevelNifsL[2] = "OninusLactis/nipplesquirt-left-lvl3.nif"
-    LevelNifsR = new String[3]
-    LevelNifsR[0] = "OninusLactis/nipplesquirt-right-lvl1.nif"
-    LevelNifsR[1] = "OninusLactis/nipplesquirt-right-lvl2.nif"
-    LevelNifsR[2] = "OninusLactis/nipplesquirt-right-lvl3.nif"
-
-    currentLevel = 0
+  currentLevel = 0
 EndEvent
 
 ; Event OnGameLoad()    
@@ -91,28 +82,18 @@ EndEvent
 ; EndEvent
 
 Event OnContainerChanged(ObjectReference akNewContainer, ObjectReference akOldContainer)        
-    
-    If akNewContainer == ActorRef
-        ; Console("OnContainerChanged: new container is ActorRef=" + ActorRef + ", self=" + self + ", baseObject=" + baseObject)
-        ; float ftimeStart = Utility.GetCurrentRealTime() 
-
-        ; Using "self" instead of "baseObject" does not work, as we will get an 
-        ; Error:  (FF000D17): has no 3d and cannot be equipped.
-        ActorRef.EquipItem(baseObject, true, true)
-        ; float ftimeEnd  = Utility.GetCurrentRealTime() 
-        
-        ; waiting after equippingn will somehow fix the "freecam blocks alignment/netimmerse update" problem        
-        Utility.Wait(0.05)
-        UpdateNodeProperties()
-        ; float ftimeEnd2  = Utility.GetCurrentRealTime() 
-        ; Console("## Equipping took " + (ftimeEnd - ftimeStart) + "s. Updating node props took " + (ftimeEnd2-ftimeStart) + "s, " + ", total=" + (ftimeEnd-ftimeStart))
-                        
-        ActorRef.QueueNiNodeUpdate()        
-        Utility.Wait(0.05)
-    Else
-        ; Console("OnContainerChanged: new container is " + akNewContainer)       
-        ; armor was unequipped (isnt acually called?!)
-    EndIf
+  If akNewContainer == ActorRef
+    if !baseObject
+      baseObject = self.GetBaseObject()
+      armorAA = (baseObject as Armor).GetNthArmorAddon(0)
+      armorAAR = (baseObject as Armor).GetNthArmorAddon(1)
+    endif
+    ActorRef.EquipItem(baseObject, true, true)
+    Utility.Wait(0.05)
+    UpdateNodeProperties()
+    ActorRef.QueueNiNodeUpdate()        
+    Utility.Wait(0.05)
+  EndIf
 EndEvent
 
 ; Function Update()        
@@ -160,34 +141,45 @@ EndEvent
 ; EndFunction
 
 Function SetLevel(int index, bool doEquip=true)
-    if index>2
-        index=2
-    endif
-    ; Console("index=" + index)
-    
-    armorAA.SetModelPath(LevelNifsL[index], false, true)
-    armorAAR.SetModelPath(LevelNifsR[index], false, true)
-    ; ActorRef.QueueNiNodeUpdate()
+  ; Initialize if not already done
+  if !baseObject || !armorAA || !armorAAR
+    baseObject = self.GetBaseObject()
+    armorAA = (baseObject as Armor).GetNthArmorAddon(0)
+    armorAAR = (baseObject as Armor).GetNthArmorAddon(1)
+  endif
 
-    currentLevel = index
+  ; Check if initialization was successful
+  if !armorAA || !armorAAR
+    Console("Error: armorAA or armorAAR is None")
+    return
+  endif
+  if index>2
+    index=2
+  endif
+  ; Console("index=" + index)
+  
+  armorAA.SetModelPath(LevelNifsL[index], false, true)
+  armorAAR.SetModelPath(LevelNifsR[index], false, true)
+  ; ActorRef.QueueNiNodeUpdate()
 
-    if doEquip
-        ; it seems that QueueNiNodeUpdate() does NOT force the new nif to be shown/loaded.
-        ; unfortunately we have to do an UnequipItem/EquipItem cycle
-        ; NiSwitchNode support would be gold here
-        ActorRef.UnequipItem(baseObject, true, true)
-        Utility.Wait(0.05)
-        ActorRef.EquipItem(baseObject, true, true)
-        Utility.Wait(0.05)
-        UpdateNodeProperties()    
-        ActorRef.QueueNiNodeUpdate()
-    endif
+  currentLevel = index
+
+  if doEquip
+    ; it seems that QueueNiNodeUpdate() does NOT force the new nif to be shown/loaded.
+    ; unfortunately we have to do an UnequipItem/EquipItem cycle
+    ; NiSwitchNode support would be gold here
+    ActorRef.UnequipItem(baseObject, true, true)
+    Utility.Wait(0.05)
+    ActorRef.EquipItem(baseObject, true, true)
+    Utility.Wait(0.05)
+    UpdateNodeProperties()    
+    ActorRef.QueueNiNodeUpdate()
+  endif
 EndFunction
 
 int Function GetLevel()
     return currentLevel
 EndFunction
-
 
 ; Updates armor node position, scale and the debug axis. Changes it's scale 
 ; depending on whether it is enabled in MCM or not. If disabled, scale will be
@@ -195,10 +187,10 @@ EndFunction
 Function UpdateNodeProperties() 
 	if (DebugAxisEnabled==true)
 		NetImmerse.SetNodeScale(ActorRef, LactisAxisNameL, 0.25, false)
-        NetImmerse.SetNodeScale(ActorRef, LactisAxisNameR, 0.25, false)
+    NetImmerse.SetNodeScale(ActorRef, LactisAxisNameR, 0.25, false)
 	else
 		NetImmerse.SetNodeScale(ActorRef, LactisAxisNameL, 0, false)
-        NetImmerse.SetNodeScale(ActorRef, LactisAxisNameR, 0, false)
+    NetImmerse.SetNodeScale(ActorRef, LactisAxisNameR, 0, false)
 	endif
     NetImmerse.SetNodeLocalPosition(ActorRef, LactisGroupNameL, NippleOffset, false)
     NetImmerse.SetNodeLocalPosition(ActorRef, LactisGroupNameR, NippleOffsetR, false)
@@ -228,7 +220,6 @@ EndFunction
 ;     NiOverride.AddOverrideFloat(ActorRef, true, baseObject as Armor, armorAA, "EmitterParticleSystem", 20, 2, -1.0, false)
 ;     ActorRef.QueueNiNodeUpdate()
 ; EndFunction
-
 
 Function Console(String msg) 
 	MiscUtil.PrintConsole("LactisNippleSquirtArmor: " + msg)
