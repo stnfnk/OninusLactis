@@ -55,7 +55,6 @@ Event OnInit()
   LevelNifsR[0] = "OninusLactis/nipplesquirt-right-lvl1.nif"
   LevelNifsR[1] = "OninusLactis/nipplesquirt-right-lvl2.nif"
   LevelNifsR[2] = "OninusLactis/nipplesquirt-right-lvl3.nif"
-
   currentLevel = 0
 EndEvent
 
@@ -82,7 +81,7 @@ EndEvent
 ; EndEvent
 
 Event OnContainerChanged(ObjectReference akNewContainer, ObjectReference akOldContainer)        
-  If akNewContainer == ActorRef
+  if akNewContainer == ActorRef
     if !baseObject
       baseObject = self.GetBaseObject()
       armorAA = (baseObject as Armor).GetNthArmorAddon(0)
@@ -90,10 +89,9 @@ Event OnContainerChanged(ObjectReference akNewContainer, ObjectReference akOldCo
     endif
     ActorRef.EquipItem(baseObject, true, true)
     Utility.Wait(0.05)
-    UpdateNodeProperties()
-    ActorRef.QueueNiNodeUpdate()        
+    UpdateNodeProperties() 
     Utility.Wait(0.05)
-  EndIf
+  endif
 EndEvent
 
 ; Function Update()        
@@ -157,13 +155,10 @@ Function SetLevel(int index, bool doEquip=true)
     index=2
   endif
   ; Console("index=" + index)
-  
   armorAA.SetModelPath(LevelNifsL[index], false, true)
   armorAAR.SetModelPath(LevelNifsR[index], false, true)
   ; ActorRef.QueueNiNodeUpdate()
-
   currentLevel = index
-
   if doEquip
     ; it seems that QueueNiNodeUpdate() does NOT force the new nif to be shown/loaded.
     ; unfortunately we have to do an UnequipItem/EquipItem cycle
@@ -172,13 +167,12 @@ Function SetLevel(int index, bool doEquip=true)
     Utility.Wait(0.05)
     ActorRef.EquipItem(baseObject, true, true)
     Utility.Wait(0.05)
-    UpdateNodeProperties()    
-    ActorRef.QueueNiNodeUpdate()
+    UpdateNodeProperties()
   endif
 EndFunction
 
 int Function GetLevel()
-    return currentLevel
+  return currentLevel
 EndFunction
 
 ; Updates armor node position, scale and the debug axis. Changes it's scale 
@@ -192,15 +186,13 @@ Function UpdateNodeProperties()
 		NetImmerse.SetNodeScale(ActorRef, LactisAxisNameL, 0, false)
     NetImmerse.SetNodeScale(ActorRef, LactisAxisNameR, 0, false)
 	endif
-    NetImmerse.SetNodeLocalPosition(ActorRef, LactisGroupNameL, NippleOffset, false)
-    NetImmerse.SetNodeLocalPosition(ActorRef, LactisGroupNameR, NippleOffsetR, false)
-    float totalScale = GlobalEmitterScale*EmitterScale
-    ; Console("UpdateNodeProperties: actorRef=" + ActorRef + ", GlobalEmitterScale=" + GlobalEmitterScale + ", EmitterScale=" + EmitterScale + ", totalScale=" + totalScale)
-    NetImmerse.SetNodeScale(ActorRef, LactisGroupNameL, totalScale, false)    
-    NetImmerse.SetNodeScale(ActorRef, LactisGroupNameR, totalScale, false)
-    ; NiOverride.AddOverrideFloat(ActorRef, true, baseObject as Armor, armorAA, "EmitterParticleSystem", 23, -1, 2, false)
-    
-    ActorRef.QueueNiNodeUpdate()
+  NetImmerse.SetNodeLocalPosition(ActorRef, LactisGroupNameL, NippleOffset, false)
+  NetImmerse.SetNodeLocalPosition(ActorRef, LactisGroupNameR, NippleOffsetR, false)
+  float totalScale = GlobalEmitterScale*EmitterScale
+  ; Console("UpdateNodeProperties: actorRef=" + ActorRef + ", GlobalEmitterScale=" + GlobalEmitterScale + ", EmitterScale=" + EmitterScale + ", totalScale=" + totalScale)
+  NetImmerse.SetNodeScale(ActorRef, LactisGroupNameL, totalScale, false)    
+  NetImmerse.SetNodeScale(ActorRef, LactisGroupNameR, totalScale, false)
+  ; NiOverride.AddOverrideFloat(ActorRef, true, baseObject as Armor, armorAA, "EmitterParticleSystem", 23, -1, 2, false)
 EndFunction
 
 ; Experimental. Does not work.
@@ -221,7 +213,6 @@ EndFunction
 ;     ActorRef.QueueNiNodeUpdate()
 ; EndFunction
 
-Function Console(String msg) 
-	MiscUtil.PrintConsole("LactisNippleSquirtArmor: " + msg)
-    Debug.Trace("LactisNippleSquirtArmor: " + msg)
+Function Console(String msg)
+  Debug.Trace("LactisNippleSquirtArmor: " + msg)
 EndFunction

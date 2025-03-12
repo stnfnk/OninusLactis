@@ -44,48 +44,48 @@ int Function GetVersion()
 EndFunction
 
 Event OnConfigInit()
-    Init()
-    Pages = new string[2]
-    Pages[0] = "$OL_SETTINGS"
-    Pages[1] = "$OL_ACTOR_OFFSETS"
-    Debug.Trace("Oninus Lactis MCM: OnConfigInit complete")
+  Init()
+  Pages = new string[2]
+  Pages[0] = "$OL_SETTINGS"
+  Pages[1] = "$OL_ACTOR_OFFSETS"
+  Debug.Trace("Oninus Lactis MCM: OnConfigInit complete")
 EndEvent
 
 Function Init()
-    Debug.Trace("Oninus Lactis MCM: Init start")
-    Parent.OnGameReload()
-    Debug.Trace("Oninus Lactis MCM: Parent.OnGameReload complete")
-    if !OninusLactisQuest
-        Debug.Trace("Oninus Lactis MCM: OninusLactisQuest property is not set!")
-        Return
-    endif
-    Main = OninusLactisQuest as OninusLactis
-    if !Main
-        Debug.Trace("Oninus Lactis MCM: Failed to cast OninusLactisQuest to OninusLactis")
-        Return
-    endif
-    Debug.Trace("Oninus Lactis MCM: Init complete successfully")
+  Debug.Trace("Oninus Lactis MCM: Init start")
+  Parent.OnGameReload()
+  Debug.Trace("Oninus Lactis MCM: Parent.OnGameReload complete")
+  if !OninusLactisQuest
+    Debug.Trace("Oninus Lactis MCM: OninusLactisQuest property is not set!")
+    Return
+  endif
+  Main = OninusLactisQuest as OninusLactis
+  if !Main
+    Debug.Trace("Oninus Lactis MCM: Failed to cast OninusLactisQuest to OninusLactis")
+    Return
+  endif
+  Debug.Trace("Oninus Lactis MCM: Init complete successfully")
 EndFunction
 
 Event OnVersionUpdate(int a_version)
-    ; a_version is the new version, CurrentVersion is the old version
-    if (a_version >= 2 && CurrentVersion < 2)
-        Pages = new string[2]
-        Pages[0] = "$OL_SETTINGS"
-        Pages[1] = "$OL_ACTOR_OFFSETS"
-    endIf
+  ; a_version is the new version, CurrentVersion is the old version
+  if (a_version >= 2 && CurrentVersion < 2)
+    Pages = new string[2]
+    Pages[0] = "$OL_SETTINGS"
+    Pages[1] = "$OL_ACTOR_OFFSETS"
+  endIf
 EndEvent
 
 Event OnConfigOpen()
-    {Called when this config menu is opened}
+  {Called when this config menu is opened}
 EndEvent
 
 Event OnConfigClose()
-    {Called when this config menu is closed}
+  {Called when this config menu is closed}
 EndEvent
 
 Event OnPageReset(string page)
-  Main.CleanupArmorRefs()
+  Main.CleanupAllArrays()
   if Page == "" || Page == "$OL_SETTINGS"
     SetCursorFillMode(TOP_TO_BOTTOM)
     AddHeaderOption("$OL_KEYBOARD_MANUAL_MODE")        
@@ -147,24 +147,23 @@ EndEvent
 
 
 Event OnOptionSelect(int option)
-  string[] menuOptions = None ; Initialize empty menu options
   if (option == optionNippleLeakEnabled)
     Main.NippleLeakEnabled = !Main.NippleLeakEnabled
-    SetToggleOptionValue(optionNippleLeakEnabled, Main.NippleLeakEnabled, menuOptions)
+    SetToggleOptionValue(optionNippleLeakEnabled, Main.NippleLeakEnabled)
   elseif (option == optionDebugAxisEnabled)
     Main.DebugAxisEnabled = !Main.DebugAxisEnabled
-    SetToggleOptionValue(optionDebugAxisEnabled, Main.DebugAxisEnabled, menuOptions)
+    SetToggleOptionValue(optionDebugAxisEnabled, Main.DebugAxisEnabled)
   elseif (option == optionRandomYRotEnabled)    
     Main.UseRandomYRotation = !Main.UseRandomYRotation
-    SetToggleOptionValue(optionRandomYRotEnabled, Main.UseRandomYRotation, menuOptions)    
+    SetToggleOptionValue(optionRandomYRotEnabled, Main.UseRandomYRotation)    
   elseif (option == optionRandomEmitterScaleEnabled)    
     Main.UseRandomEmitterScale = !Main.UseRandomEmitterScale
-    SetToggleOptionValue(optionRandomEmitterScaleEnabled, Main.UseRandomEmitterScale, menuOptions)
+    SetToggleOptionValue(optionRandomEmitterScaleEnabled, Main.UseRandomEmitterScale)
   elseif (option == optionRandomEmitterDeactivationEnabled)   
     Main.UseRandomEmitterDeactivation = !Main.UseRandomEmitterDeactivation
-    SetToggleOptionValue(optionRandomEmitterDeactivationEnabled, Main.UseRandomEmitterDeactivation, menuOptions)
+    SetToggleOptionValue(optionRandomEmitterDeactivationEnabled, Main.UseRandomEmitterDeactivation)
   elseif (option == optionResetAll)
-    Main.StopAllNippleSquirts()   
+    Main.StopAllNippleSquirts()
   elseif option == optionUninstall
     Main.Uninstall()
     ShowMessage("$OL_MOD_UNINSTALLED", false)
@@ -286,51 +285,50 @@ EndEvent
 
 Event OnOptionSliderAccept(int option, float value)
   Actor actorRef = GetSelectedActor()
-  string[] menuOptions = None
   if (option == optionOffsetLeftX)
     Main.NippleOffsetL[0] = value
-    SetSliderOptionValue(optionOffsetLeftX, Main.NippleOffsetL[0], "{2}", menuOptions)
+    SetSliderOptionValue(optionOffsetLeftX, Main.NippleOffsetL[0], "{2}")
   elseIf (option == optionOffsetLeftY)
     Main.NippleOffsetL[2] = value
-    SetSliderOptionValue(optionOffsetLeftY, Main.NippleOffsetL[2], "{2}", menuOptions)
+    SetSliderOptionValue(optionOffsetLeftY, Main.NippleOffsetL[2], "{2}")
   elseIf (option == optionOffsetLeftZ)
     Main.NippleOffsetL[1] = value
-    SetSliderOptionValue(optionOffsetLeftZ, Main.NippleOffsetL[1], "{2}", menuOptions)
+    SetSliderOptionValue(optionOffsetLeftZ, Main.NippleOffsetL[1], "{2}")
   elseIf option == optionEmitterScale
     Main.EmitterScale = value   
-    SetSliderOptionValue(optionEmitterScale, Main.EmitterScale, "{2}", menuOptions)
+    SetSliderOptionValue(optionEmitterScale, Main.EmitterScale, "{2}")
   elseIf (option == optionGlobalEmitterScale)
     Main.GlobalEmitterScale = value
-    SetSliderOptionValue(optionGlobalEmitterScale, Main.GlobalEmitterScale, "{2}", menuOptions)
+    SetSliderOptionValue(optionGlobalEmitterScale, Main.GlobalEmitterScale, "{2}")
   elseif (option == optionNpcOffsetLeftX)
     if actorRef
       Main.actorStorage.SetNpcOffsetIndex(actorRef, 0, value)
-      SetSliderOptionValue(optionNpcOffsetLeftX, value, "{2}", menuOptions)
+      SetSliderOptionValue(optionNpcOffsetLeftX, value, "{2}")
     endif
   elseIf (option == optionNpcOffsetLeftY)
     if actorRef
       Main.actorStorage.SetNpcOffsetIndex(actorRef, 2, value)
-      SetSliderOptionValue(optionNpcOffsetLeftY, value, "{2}", menuOptions)
+      SetSliderOptionValue(optionNpcOffsetLeftY, value, "{2}")
     endif
   elseIf (option == optionNpcOffsetLeftZ)
     if actorRef
       Main.actorStorage.SetNpcOffsetIndex(actorRef, 1, value)
-      SetSliderOptionValue(optionNpcOffsetLeftZ, value, "{2}", menuOptions)
+      SetSliderOptionValue(optionNpcOffsetLeftZ, value, "{2}")
     endif
   elseIf (option == optionNpcScale)
     if actorRef
       Main.actorStorage.SetNpcScale(actorRef, value)
-      SetSliderOptionValue(optionNpcScale, value, "{2}", menuOptions)
+      SetSliderOptionValue(optionNpcScale, value, "{2}")
     endif
   endIf
+  ForcePageReset()
 EndEvent
 
 Event OnOptionKeyMapChange(Int Option, Int KeyCode, String ConflictControl, String ConflictName)
   Debug.Trace("Oninus Lactis MCM: Key mapping changed - Option: "+ Option + ", KeyCode: " + KeyCode)
-  string[] menuOptions = None
   if (Option == optionKeyStartLactating)    
     Main.RemapStartLactatingKey(KeyCode)
-    SetKeyMapOptionValue(Option, KeyCode, menuOptions)
+    SetKeyMapOptionValue(Option, KeyCode)
     Debug.Trace("Oninus Lactis MCM: Start lactating key remapped to " + KeyCode)
   else
     Debug.Trace("Oninus Lactis MCM: Unknown key option " + Option + " changed")
@@ -415,7 +413,6 @@ Bool Function ExportSettings()
 EndFunction
 
 Int Function ImportSettings()
-  string[] menuOptions = None
   String filename = "../Lactis/MCM_Settings"
   if JsonUtil.JsonExists(filename) == false
     return 0
@@ -424,19 +421,19 @@ Int Function ImportSettings()
   endIf
   Main.StartLactatingKey = JsonUtil.GetIntValue(filename, "optionKeyStartLactating")
   Main.RemapStartLactatingKey(Main.StartLactatingKey)
-  SetKeyMapOptionValue(optionKeyStartLactating, Main.StartLactatingKey, menuOptions)
+  SetKeyMapOptionValue(optionKeyStartLactating, Main.StartLactatingKey)
   Main.NippleOffsetL[0] = JsonUtil.GetFloatValue(filename, "optionOffsetLeftX")
-  SetSliderOptionValue(optionOffsetLeftX, Main.NippleOffsetL[0], "{2}", menuOptions)
+  SetSliderOptionValue(optionOffsetLeftX, Main.NippleOffsetL[0], "{2}")
   Main.NippleOffsetL[2] = JsonUtil.GetFloatValue(filename, "optionOffsetLeftY")
-  SetSliderOptionValue(optionOffsetLeftY, Main.NippleOffsetL[2], "{2}", menuOptions)
+  SetSliderOptionValue(optionOffsetLeftY, Main.NippleOffsetL[2], "{2}")
   Main.NippleOffsetL[1] = JsonUtil.GetFloatValue(filename, "optionOffsetLeftZ")
-  SetSliderOptionValue(optionNpcOffsetLeftY, Main.NippleOffsetL[1], "{2}", menuOptions)
+  SetSliderOptionValue(optionOffsetLeftZ, Main.NippleOffsetL[1], "{2}")
   Main.DebugAxisEnabled = JsonUtil.GetIntValue(filename, "optionDebugAxisEnabled") as bool
-  SetToggleOptionValue(optionDebugAxisEnabled, Main.DebugAxisEnabled, menuOptions)
+  SetToggleOptionValue(optionDebugAxisEnabled, Main.DebugAxisEnabled)
   Main.GlobalEmitterScale = JsonUtil.GetFloatValue(filename, "optionGlobalEmitterScale")
-  SetSliderOptionValue(optionGlobalEmitterScale, Main.GlobalEmitterScale, "{2}", menuOptions)
+  SetSliderOptionValue(optionGlobalEmitterScale, Main.GlobalEmitterScale, "{2}")
   Main.NippleLeakEnabled = JsonUtil.GetIntValue(filename, "optionNippleLeakEnabled") as bool
-  SetToggleOptionValue(optionNippleLeakEnabled, Main.NippleLeakEnabled, menuOptions)
+  SetToggleOptionValue(optionNippleLeakEnabled, Main.NippleLeakEnabled)
   ForcePageReset()
   return 1
 EndFunction
@@ -444,12 +441,10 @@ EndFunction
 ; MCM Recorder support
 string Function GetCustomControl(int option)
   Debug.Trace("Oninus Lactis MCM: GetCustomControl called for " + option)
-  string[] result = new string[1]
   if option == optionKeyStartLactating
-    result[0] = "$OL_TOGGLE_NIPPLE_SQUIRT_KEY"
-    return result
+    return "$OL_TOGGLE_NIPPLE_SQUIRT_KEY"
   endif
-  return result
+  return ""
 EndFunction
 
 Function FormatCustomControl(string fid, string value)
@@ -457,22 +452,4 @@ Function FormatCustomControl(string fid, string value)
   if fid == "optionKeyStartLactating"
     Main.RemapStartLactatingKey(value as int)
   endif
-EndFunction
-
-string[] Function CreateStringArray(string value1, string value2 = "", string value3 = "", string value4 = "")
-  string[] result
-  if value4 != ""
-    result = new string[4]
-    result[3] = value4
-  elseif value3 != ""
-    result = new string[3]
-    result[2] = value3
-  elseif value2 != ""
-    result = new string[2]
-    result[1] = value2
-  else
-    result = new string[1]
-  endif
-  result[0] = value1
-  return result
 EndFunction
