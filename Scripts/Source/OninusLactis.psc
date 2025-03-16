@@ -40,8 +40,9 @@ Bool Property UseRandomEmitterScale Auto
 Bool Property UseRandomEmitterDeactivation Auto
 Actor[] Property QueuedStopActors Auto Hidden
 float[] Property QueuedStopTimes Auto Hidden
+int Property activeTimerCount = 0 Auto Hidden
 
-string fVersion = "NG"
+string fVersion = "Oninus Lactis NG"
 
 Actor[] armorActors
 ObjectReference[] armorRefsLeft
@@ -50,7 +51,7 @@ ObjectReference[] armorRefsLeft
 LactisActorStorage Property actorStorage Auto
 
 Event OnInit()
-  Debug.Notification("Installing Oninus Lactis " + fVersion + "...")
+  Debug.Notification("Installing " + fVersion + "...")
   Maintenance()
   RegisterModEvents()
 EndEvent
@@ -79,11 +80,9 @@ Function Maintenance()
     ; If the arrays exist but are wrong size, recreate them
     Actor[] tempActors = armorActors
     ObjectReference[] tempRefsLeft = armorRefsLeft
-    
     ; Create new arrays
     armorActors = new Actor[20]
     armorRefsLeft = new ObjectReference[20]
-    
     ; Copy existing data if available
     if tempActors && tempActors.Length > 0
       int copyLimit = tempActors.Length
@@ -124,6 +123,8 @@ Function RegisterModEvents()
   Utility.Wait(3)
   UnregisterForModEvent("OLactis.Lactating")
   RegisterForModEvent("OLactis.Lactating","OnModEvent_Lactating")
+  UnregisterForModEvent("OLactis.Cleanup")
+  RegisterForModEvent("OLactis.Cleanup","OnModEvent_Cleanup")
   UnregisterForModEvent("OLactis.SetOffset")
   RegisterForModEvent("OLactis.SetOffset","OnModEvent_SetOffset")
   UnregisterForModEvent("OLactis.RemoveOffset")
@@ -134,6 +135,13 @@ Function OnModEvent_Lactating(Form Who, Int Duration, Int Stage)
   PlayNippleSquirt(Who as Actor, Duration, Stage)
 EndFunction
 
+Function OnModEvent_Cleanup()
+  Utility.Wait(1)
+  FixStuckEffects()
+  Utility.Wait(0.2)
+  CleanupAllArrays()
+EndFunction
+
 Function OnModEvent_SetOffset(Form Who, Float XOffset, Float ZOffset, Float YOffset, Float LactisScale)
   actorStorage.SetNpcOffsetIndex(Who as Actor, 0, XOffset)
   actorStorage.SetNpcOffsetIndex(Who as Actor, 1, ZOffset)
@@ -141,7 +149,7 @@ Function OnModEvent_SetOffset(Form Who, Float XOffset, Float ZOffset, Float YOff
   actorStorage.SetNpcScale(Who as Actor,LactisScale)
 EndFunction
 
-Function OnModEvent_OnModEvent_RemoveOffset(Form Who)
+Function OnModEvent_RemoveOffset(Form Who)
   actorStorage.DeleteNpcStorage(Who as Actor)
 EndFunction
 
@@ -193,11 +201,9 @@ Function StopNippleSquirt(Actor actorRef)
   if !actorRef || !HasArmorRefs(actorRef)
     return
   endif
-  
   if NippleLeakEnabled && actorRef.Is3DLoaded()
     StopNippleLeak(actorRef)
   endif
-  
   LactisNippleSquirtArmor actorArmor = GetArmorRefs(actorRef)
   StopNippleSquirtInternal(actorRef, actorArmor)
   Utility.Wait(0.05)
@@ -233,79 +239,72 @@ Function PlayNippleSquirt(Actor actorRef, float duration, int level=0)
   endif
   int inclvl = (level + 1)
   Debug.Trace("Oninus Lactis: " + actorRef.GetDisplayName() + " playing level " + inclvl + " nipple squirt for " + duration as int + " seconds")
-  
-  ; Start the effect
-  StartNippleSquirt(actorRef, level)
-  
-  ; First, remove any existing scheduled stops for this actor to prevent overlapping timers
+  bool hasActiveEffect = HasArmorRefs(actorRef)
+  if hasActiveEffect
+    LactisNippleSquirtArmor actorArmor = GetArmorRefs(actorRef)
+    if actorArmor
+      actorArmor.SetLevel(level, false)
+      actorArmor.UpdateNodeProperties()
+      Debug.Trace("Oninus Lactis: Updated level for " + actorRef.GetDisplayName() + " to " + inclvl)
+    endif
+  else
+    StartNippleSquirt(actorRef, level)
+  endif
+  int existingSlot = -1
+  int emptySlot = -1
   int i = 0
   while i < QueuedStopActors.Length
     if QueuedStopActors[i] == actorRef
-      ; Found existing timer for this actor, clear it
-      Debug.Trace("Oninus Lactis: Removing previously scheduled effect stop for " + actorRef.GetDisplayName())
-      QueuedStopActors[i] = None
-      QueuedStopTimes[i] = 0.0
-      ; Don't break - clear all instances in case there are duplicates
+      existingSlot = i
+    elseif QueuedStopActors[i] == None && emptySlot == -1
+      emptySlot = i
     endif
     i += 1
   endwhile
-  
-  ; Now find an empty slot for the new timer
-  int emptySlot = QueuedStopActors.Find(None)
-  
-  ; If found empty slot, use it
-  if emptySlot >= 0
+  if existingSlot >= 0
+    QueuedStopTimes[existingSlot] = Utility.GetCurrentRealTime() + duration
+    Debug.Trace("Oninus Lactis: Updated scheduled effect stop for " + actorRef.GetDisplayName() + " in " + duration + " seconds")
+  elseif emptySlot >= 0
     QueuedStopActors[emptySlot] = actorRef
     QueuedStopTimes[emptySlot] = Utility.GetCurrentRealTime() + duration
+    activeTimerCount += 1
     Debug.Trace("Oninus Lactis: Scheduled effect stop for " + actorRef.GetDisplayName() + " in " + duration + " seconds")
-    
-    ; Make sure updates are running
-    RegisterForSingleUpdate(1.0)
   else
     Debug.Trace("Oninus Lactis: Warning - No free slots to queue effect stop")
+  endif
+  if activeTimerCount > 0
+    RegisterForSingleUpdate(1.0)
   endif
 EndFunction
 
 Event OnUpdate()
-  ; First process existing cleanup logic
   CleanupAllArrays()
-  
-  ; Now check for queued stops
   float currentTime = Utility.GetCurrentRealTime()
-  bool hasActiveStops = false
-  
+  bool needsQuickUpdate = false
   int i = 0
   while i < QueuedStopActors.Length
     Actor actorRef = QueuedStopActors[i]
-    
     if actorRef
       if currentTime >= QueuedStopTimes[i]
-        ; Time to stop the effect
         if HasNippleSquirt(actorRef)
           StopNippleSquirt(actorRef)
         endif
-        
-        ; Clear this slot
         QueuedStopActors[i] = None
         QueuedStopTimes[i] = 0.0
+        activeTimerCount -= 1
       else
-        ; Still waiting
-        hasActiveStops = true
+        needsQuickUpdate = true
       endif
     endif
-    
     i += 1
   endwhile
-  
-  ; Schedule next update
-  if hasActiveStops
+  if needsQuickUpdate
     RegisterForSingleUpdate(1.0)  ; Check again in 1 second
   else
-    RegisterForSingleUpdate(20.0)  ; Default cleanup interval from original code
+    RegisterForSingleUpdate(20.0)  ; Default cleanup interval
   endif
 EndEvent
 
-; Checks whether the given 'actorRef' has the nipple squirt effect running.
 bool Function HasNippleSquirt(Actor actorRef)
   if !actorRef || !NippleSquirtArmor
     return false
@@ -356,6 +355,17 @@ Function ForceStopNippleSquirt(Actor actorRef)
   if !actorRef
     return
   endif
+  int i = 0
+  bool found = false
+  while i < QueuedStopActors.Length && !found
+    if QueuedStopActors[i] == actorRef
+      QueuedStopActors[i] = None
+      QueuedStopTimes[i] = 0.0
+      activeTimerCount -= 1
+      found = true
+    endif
+    i += 1
+  endwhile
   actorRef.RemoveItem(NippleSquirtArmor)
   if HasArmorRefs(actorRef)
     RemoveArmorRefs(actorRef)
@@ -363,6 +373,7 @@ Function ForceStopNippleSquirt(Actor actorRef)
   Utility.Wait(0.05)
   actorRef.QueueNiNodeUpdate()
 EndFunction
+
 
 Function StopAllNippleSquirts()
   int i = 0
@@ -422,10 +433,6 @@ Function ApplyArmoredActorProperties()
   endwhile
 EndFunction
 
-; ----------------------------- Nipple leak
-
-; Plays the nipple leaking effect on both breasts of the given 'ActorRef'.
-; The 'duration' is in seconds, use -1 to play the effect forever.
 Function StartNippleLeak(Actor actorRef, int duration)
   if !actorRef || !LactisNippleLeakCBBE
     return
@@ -433,7 +440,6 @@ Function StartNippleLeak(Actor actorRef, int duration)
   LactisNippleLeakCBBE.play(actorRef, duration)
 EndFunction
 
-; Stops the milk leaking effect on both breasts
 Function StopNippleLeak(Actor actorRef)
   if !actorRef || !LactisNippleLeakCBBE
     return
@@ -441,14 +447,6 @@ Function StopNippleLeak(Actor actorRef)
   LactisNippleLeakCBBE.Stop(actorRef)
 EndFunction
 
-; ------------------------- Armor reference storage utilities
-;
-; Actors with active nipple squirt effect (i.e. the nipple squirt armor equipped)
-; are stored in the 'armorActors' array.
-;
-
-; Returns whether the given 'actorRef' has the nipple squirt armor equipped, by
-; checking the internal 'armorActors' for the 'actorRef'.
 bool Function HasArmorRefs(Actor actorRef)
   if !actorRef
     return false
@@ -461,8 +459,6 @@ bool Function HasArmorRefs(Actor actorRef)
   endif
 EndFunction
 
-; Stores the left and right armor references for the given actorRef in the
-; internal 'armorActors' array.
 int Function StoreArmorRefs(Actor actorRef, LactisNippleSquirtArmor armorRefLeft)
   if !actorRef || !armorRefLeft
     Debug.Trace("Oninus Lactis: Error - Tried to store null actor or armor reference")
@@ -470,7 +466,6 @@ int Function StoreArmorRefs(Actor actorRef, LactisNippleSquirtArmor armorRefLeft
   endif
   int firstFreeIndex = armorActors.Find(None)
   if firstFreeIndex>=0
-    ; Console("Storing armor refs for actor=" + actorRef + ", armorRef=" + armorRefLeft)
     armorActors[firstFreeIndex] = actorRef
     armorRefsLeft[firstFreeIndex] = armorRefLeft
   else
@@ -479,8 +474,6 @@ int Function StoreArmorRefs(Actor actorRef, LactisNippleSquirtArmor armorRefLeft
   return firstFreeIndex
 EndFunction
 
-; Gets the left and right armor references for the given actorRef or None if the actor has no
-; nipple squirt armor equipped.
 LactisNippleSquirtArmor Function GetArmorRefs(Actor actorRef)
   if !actorRef
     return None
@@ -494,34 +487,56 @@ LactisNippleSquirtArmor Function GetArmorRefs(Actor actorRef)
   return None
 EndFunction
 
-; Removes the armor references for the given actorRef from the internal storage.
 Function RemoveArmorRefs(Actor actorRef)
   if !actorRef
     return
   endif
   int actorIndex = armorActors.Find(actorRef)
   if actorIndex >= 0
-    ; Console("Removing armor refs for actor=" + actorRef)
     armorActors[actorIndex] = None
     armorRefsLeft[actorIndex] = None
   endif
 EndFunction
 
-Function CleanupAllArrays()
+Function FixStuckEffects()
+  int fixedCount = 0
+  Cell playerCell = Game.GetPlayer().GetParentCell()
+  if playerCell
+    int actorCount = playerCell.GetNumRefs(43) ; 43 = Actor
+    int i = 0
+    while i < actorCount
+      Actor cellActor = playerCell.GetNthRef(i, 43) as Actor
+      if cellActor && cellActor.IsEquipped(NippleSquirtArmor)
+        bool isTracked = IsActorInArray(cellActor, armorActors)
+        if !isTracked
+          ForceStopNippleSquirt(cellActor)
+          fixedCount += 1
+          Debug.Trace("Fixed " + cellActor.GetDisplayName())
+        endif
+      endif
+      i += 1
+    endwhile
+  endif    
+  if fixedCount > 0
+    if fixedCount > 1
+      Debug.Notification("Fixed " + fixedCount + " stuck nipple squirts")
+    else
+      Debug.Notification("Fixed " + fixedCount + " stuck nipple squirt")
+    endif
+  endif
+EndFunction
+
+bool Function IsActorInArray(Actor akActor, Actor[] akArray)
   int i = 0
-  while i < armorActors.Length
-    ; Clean up armor refs
-    Actor actorRef = armorActors[i]
-    if actorRef && !HasNippleSquirt(actorRef)
-      armorActors[i] = None
-      armorRefsLeft[i] = None
+  while i < akArray.Length
+    if akArray[i] == akActor
+      return true
     endif
     i += 1
   endwhile
+  return false
 EndFunction
 
-; Gets the number of actors with active nipple squirt armor stored in the internal
-; 'armorActors' arrary.
 Int Function GetArmoredActorsCount()
   int i = 0
   int len = armorActors.Length
@@ -537,6 +552,30 @@ Int Function GetArmoredActorsCount()
   return count
 EndFunction
 
+Function CleanupAllArrays()
+  if !armorActors
+    return
+  endif
+  int i = 0
+  while i < armorActors.Length
+    Actor actorRef = armorActors[i]
+    if actorRef && !HasNippleSquirt(actorRef)
+      armorActors[i] = None
+      armorRefsLeft[i] = None
+    endif
+    i += 1
+  endwhile
+  int activeCount = 0
+  i = 0
+  while i < QueuedStopActors.Length
+    if QueuedStopActors[i] != None
+      activeCount += 1
+    endif
+    i += 1
+  endwhile
+  activeTimerCount = activeCount
+EndFunction
+
 ; ---------------------------- Utility functions
 
 Event OnKeyDown(Int keyCode)
@@ -545,8 +584,6 @@ Event OnKeyDown(Int keyCode)
     Return
   endif
   Debug.Trace("Oninus Lactis: Key pressed: " + keyCode)
-
-  ; Handle StartLactatingKey
   if (keyCode == StartLactatingKey)
     Debug.Trace("Oninus Lactis: Start lactating key pressed")
     ObjectReference crosshairObjRef = Game.GetCurrentCrosshairRef()
@@ -565,93 +602,11 @@ Event OnKeyDown(Int keyCode)
   ; keycode 54 = right shift
 EndEvent
 
-Function Uninstall()
-  Debug.Notification("Uninstalling Oninus Lactis")
-  UnregisterForUpdate()
-  StopAllNippleSquirts()
-  actorStorage.Clear()
-  UnregisterForAllModEvents()
-  UnregisterForAllKeys()
-  Reset()
-  Stop()
-EndFunction
-
 Function RemapStartLactatingKey(Int zKey)
   Debug.Trace("Oninus Lactis: Remapping ToggleNippleSquirt from " + StartLactatingKey + " to "+ zKey)
   UnregisterForKey(StartLactatingKey)
   StartLactatingKey = zKey
   RegisterForKey(StartLactatingKey)
-EndFunction
-
-Event OnUnload()
-  CleanupAllArrays()
-EndEvent
-
-Function FixStuckEffects()
-    Cell currentCell = PlayerRef.GetParentCell()
-    if currentCell
-        ; Get all references in the player's current cell
-        int fixedCount = 0
-        
-        ; First check the player
-        if PlayerRef.IsEquipped(NippleSquirtArmor)
-            bool isTracked = false
-            int i = 0
-            while i < armorActors.Length
-                if armorActors[i] == PlayerRef
-                    isTracked = true
-                    i = armorActors.Length
-                endif
-                i += 1
-            endwhile
-            
-            if !isTracked
-                ForceStopNippleSquirt(PlayerRef)
-                fixedCount += 1
-                Debug.Trace("Fixed player")
-            endif
-        endif
-        
-        ; Check all references in the cell
-        int count = currentCell.GetNumRefs(43) ; 43 is kActor
-        int j = 0
-        
-        while j < count
-            Actor cellActor = currentCell.GetNthRef(j, 43) as Actor            
-            if cellActor && cellActor.IsEquipped(NippleSquirtArmor)
-                bool isTracked = false
-                int k = 0
-                while k < armorActors.Length
-                    if armorActors[k] == cellActor
-                        isTracked = true
-                        k = armorActors.Length
-                    endif
-                    k += 1
-                endwhile
-                
-                if !isTracked
-                    ForceStopNippleSquirt(cellActor)
-                    fixedCount += 1
-                    Debug.Trace("Fixed " + cellActor.GetDisplayName())
-                endif
-            endif            
-            j += 1
-        endwhile
-        if fixedCount > 0
-            Debug.Notification("Oninus Lactis: Fixed " + fixedCount + " stuck effects")
-        endif
-    endif
-EndFunction
-
-bool Function IsActorInArray(Actor akActor, Actor[] akArray)
-  int i = 0
-  while i < akArray.Length
-    if akArray[i] == akActor
-      return true
-    endif
-    i += 1
-  endwhile
-  return false
 EndFunction
 
 ; Maps the specified value val from the interval defined by srcMin and
@@ -673,3 +628,18 @@ float Function MapValue(float val, float srcMin, float srcMax, float dstMin, flo
   endif
   return dstMin + (val-srcMin) / (srcMax-srcMin) * (dstMax-dstMin)
 EndFunction
+
+Function Uninstall()
+  Debug.Notification("Uninstalling Oninus Lactis")
+  UnregisterForUpdate()
+  StopAllNippleSquirts()
+  actorStorage.Clear()
+  UnregisterForAllModEvents()
+  UnregisterForAllKeys()
+  Reset()
+  Stop()
+EndFunction
+
+Event OnUnload()
+  CleanupAllArrays()
+EndEvent

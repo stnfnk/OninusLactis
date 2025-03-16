@@ -1,4 +1,4 @@
-# Oninus Lactis
+# Oninus Lactis NG
 
 A simple framework for lactating/nipple squirt visual effects. Supports individual player and NPC effect offset and scaling.
 
