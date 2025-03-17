@@ -206,7 +206,7 @@ Function StopNippleSquirt(Actor actorRef)
   endif
   LactisNippleSquirtArmor actorArmor = GetArmorRefs(actorRef)
   StopNippleSquirtInternal(actorRef, actorArmor)
-  Utility.Wait(0.05)
+  Utility.Wait(0.1)
   RemoveArmorRefs(actorRef)
 EndFunction
 
@@ -348,7 +348,7 @@ Function StopNippleSquirtInternal(Actor actorRef, LactisNippleSquirtArmor armorR
   Int OnUnEquipp = ModEvent.Create("OLactis.Unequipped")
   ModEvent.PushForm(OnUnEquipp, actorRef as Form)
   ModEvent.Send(OnUnEquipp)
-  Utility.Wait(0.05)
+  Utility.Wait(0.1)
   Debug.SendAnimationEvent(actorRef, "RefreshObject")
 EndFunction
 
