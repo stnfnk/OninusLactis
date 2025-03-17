@@ -243,8 +243,9 @@ Function PlayNippleSquirt(Actor actorRef, float duration, int level=0)
   if hasActiveEffect
     LactisNippleSquirtArmor actorArmor = GetArmorRefs(actorRef)
     if actorArmor
-      actorArmor.SetLevel(level, false)
+      actorArmor.SetLevel(level, true)
       actorArmor.UpdateNodeProperties()
+      StartNippleLeak(actorRef, 18)
       Debug.Trace("Oninus Lactis: Updated level for " + actorRef.GetDisplayName() + " to " + inclvl)
     endif
   else
