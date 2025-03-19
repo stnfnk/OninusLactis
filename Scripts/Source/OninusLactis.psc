@@ -116,11 +116,10 @@ Function Maintenance()
   Debug.Trace("Oninus Lactis: loaded version is " + fVersion)
   RegisterForKey(StartLactatingKey)
   ApplyArmoredActorProperties()
-  Utility.Wait(0.05)
 EndFunction
 
 Function RegisterModEvents()
-  Utility.Wait(3)
+  Utility.Wait(1)
   UnregisterForModEvent("OLactis.Lactating")
   RegisterForModEvent("OLactis.Lactating","OnModEvent_Lactating")
   UnregisterForModEvent("OLactis.Cleanup")
@@ -136,7 +135,7 @@ Function OnModEvent_Lactating(Form Who, Int Duration, Int Stage)
 EndFunction
 
 Function OnModEvent_Cleanup()
-  Utility.Wait(1)
+  Utility.Wait(0.2)
   FixStuckEffects()
   Utility.Wait(0.2)
   CleanupAllArrays()
@@ -226,7 +225,6 @@ Function ToggleNippleSquirt(Actor actorRef, int level=0)
   endif
   ; float ftimeEnd = Utility.GetCurrentRealTime()
   ; Console("Starting/stopping took " + (ftimeEnd - ftimeStart) + " seconds to run")
-  Utility.Wait(0.05)
 EndFunction
 
 ; Plays the nipple squirt effect on the given 'actorRef' for the given 'duration'
@@ -240,16 +238,22 @@ Function PlayNippleSquirt(Actor actorRef, float duration, int level=0)
   int inclvl = (level + 1)
   Debug.Trace("Oninus Lactis: " + actorRef.GetDisplayName() + " playing level " + inclvl + " nipple squirt for " + duration as int + " seconds")
   bool hasActiveEffect = HasArmorRefs(actorRef)
+  LactisNippleSquirtArmor actorArmor = None
   if hasActiveEffect
-    LactisNippleSquirtArmor actorArmor = GetArmorRefs(actorRef)
+    actorArmor = GetArmorRefs(actorRef)
     if actorArmor
       actorArmor.SetLevel(level, true)
       actorArmor.UpdateNodeProperties()
       StartNippleLeak(actorRef, 18)
       Debug.Trace("Oninus Lactis: Updated level for " + actorRef.GetDisplayName() + " to " + inclvl)
+    else
+      ; If we think there's an effect but can't get the armor, clean up and start fresh
+      RemoveArmorRefs(actorRef)
+      hasActiveEffect = false
     endif
   else
     StartNippleSquirt(actorRef, level)
+    actorArmor = GetArmorRefs(actorRef)
   endif
   int existingSlot = -1
   int emptySlot = -1
@@ -348,7 +352,7 @@ Function StopNippleSquirtInternal(Actor actorRef, LactisNippleSquirtArmor armorR
   Int OnUnEquipp = ModEvent.Create("OLactis.Unequipped")
   ModEvent.PushForm(OnUnEquipp, actorRef as Form)
   ModEvent.Send(OnUnEquipp)
-  Utility.Wait(0.1)
+  Utility.Wait(0.2)
   Debug.SendAnimationEvent(actorRef, "RefreshObject")
 EndFunction
 
@@ -371,7 +375,6 @@ Function ForceStopNippleSquirt(Actor actorRef)
   if HasArmorRefs(actorRef)
     RemoveArmorRefs(actorRef)
   endif
-  Utility.Wait(0.05)
   actorRef.QueueNiNodeUpdate()
 EndFunction
 
@@ -560,9 +563,18 @@ Function CleanupAllArrays()
   int i = 0
   while i < armorActors.Length
     Actor actorRef = armorActors[i]
-    if actorRef && !HasNippleSquirt(actorRef)
-      armorActors[i] = None
-      armorRefsLeft[i] = None
+    if actorRef
+      if !HasNippleSquirt(actorRef)
+        armorActors[i] = None
+        armorRefsLeft[i] = None
+      else
+        ; Ensure that the armor reference is still valid
+        LactisNippleSquirtArmor currentArmor = armorRefsLeft[i] as LactisNippleSquirtArmor
+        if !currentArmor || !currentArmor.ActorRef
+          ; The armor reference is stale or invalid, force cleanup
+          ForceStopNippleSquirt(actorRef)
+        endif
+      endif
     endif
     i += 1
   endwhile
