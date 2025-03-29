@@ -13,6 +13,28 @@
 ; Public API
 ; ---
 ;
+; ModEvents
+; ---
+; + OLactis.Lactating(Form Who, Int Duration, Int Stage)
+;   Starts a nipple squirt effect on the specified actor for the given duration
+;   and stage (0-2). Duration is in seconds.
+;
+; + OLactis.Cleanup()
+;   Triggers cleanup of stuck effects and arrays. Use this when you need to
+;   ensure all effects are properly cleaned up.
+;
+; + OLactis.SetOffset(Form Who, Float XOffset, Float ZOffset, Float YOffset, Float LactisScale)
+;   Sets the nipple offset and scale for a specific actor. Use this to customize
+;   the effect position and size for individual actors.
+;
+; + OLactis.RemoveOffset(Form Who)
+;   Removes the stored offset and scale for a specific actor.
+;
+; + OLactis.Unequipped(Form Who)
+;   Sent when an actor unequips the nipple squirt armor. Use this to handle
+;   cleanup when the effect is removed.
+;
+; DEPRECATED API - Use ModEvents instead
 ; + StartNippleSquirt(Actor actorRef, int level=0)
 ; + StopNippleSquirt(Actor actorRef)
 ; + ToggleNippleSquirt(Actor actorRef, int level=0)
@@ -58,7 +80,7 @@ EndEvent
 
 Event OnPlayerLoadGame()
   RegisterModEvents()
-  StopAllNippleSquirts()
+  FixStuckEffects()
 endEvent
 
 int Function GetVersion()
@@ -130,6 +152,47 @@ Function RegisterModEvents()
   RegisterForModEvent("OLactis.RemoveOffset","OnModEvent_RemoveOffset")
 EndFunction
 
+;
+; ██████╗ ██╗   ██╗██████╗ ██╗     ██╗ ██████╗     █████╗ ██████╗ ██╗
+; ██╔══██╗██║   ██║██╔══██╗██║     ██║██╔════╝    ██╔══██╗██╔══██╗██║
+; ██████╔╝██║   ██║██████╔╝██║     ██║██║         ███████║██████╔╝██║
+; ██╔═══╝ ██║   ██║██╔══██╗██║     ██║██║         ██╔══██║██╔═══╝ ██║
+; ██║     ╚██████╔╝██████╔╝███████╗██║╚██████╗    ██║  ██║██║     ██║
+; ╚═╝      ╚═════╝ ╚═════╝ ╚══════╝╚═╝ ╚═════╝    ╚═╝  ╚═╝╚═╝     ╚═╝
+;
+; Use ModEvents to start and stop the nipple squirt effect. 
+; ---
+; ModEvents
+; ---
+; + OLactis.Lactating(Form Who, Int Duration, Int Stage)
+;   Starts a nipple squirt effect on the specified actor for the given duration
+;   and stage (0-2). Duration is in seconds.
+;
+; + OLactis.Cleanup()
+;   Triggers cleanup of stuck effects and arrays. Use this when you need to
+;   ensure all effects are properly cleaned up.
+;
+; + OLactis.SetOffset(Form Who, Float XOffset, Float ZOffset, Float YOffset, Float LactisScale)
+;   Sets the nipple offset and scale for a specific actor. Use this to customize
+;   the effect position and size for individual actors.
+;
+; + OLactis.RemoveOffset(Form Who)
+;   Removes the stored offset and scale for a specific actor.
+;
+; + OLactis.Unequipped(Form Who)
+;   Sent when an actor unequips the nipple squirt armor. Use this to handle
+;   cleanup when the effect is removed.
+; ---
+; DEPRECATED API - Use ModEvents instead
+; + StartNippleSquirt(Actor actorRef, int level=0)
+; + StopNippleSquirt(Actor actorRef)
+; + ToggleNippleSquirt(Actor actorRef, int level=0)
+; + PlayNippleSquirt(Actor actorRef, float duration, int level=0)
+; + HasNippleSquirt(Actor actorRef)
+; ---
+; All other functions and properties are considered private and should not be
+; used by other mods.
+
 Function OnModEvent_Lactating(Form Who, Int Duration, Int Stage)
   PlayNippleSquirt(Who as Actor, Duration, Stage)
 EndFunction
@@ -151,22 +214,6 @@ EndFunction
 Function OnModEvent_RemoveOffset(Form Who)
   actorStorage.DeleteNpcStorage(Who as Actor)
 EndFunction
-
-;
-; ██████╗ ██╗   ██╗██████╗ ██╗     ██╗ ██████╗     █████╗ ██████╗ ██╗
-; ██╔══██╗██║   ██║██╔══██╗██║     ██║██╔════╝    ██╔══██╗██╔══██╗██║
-; ██████╔╝██║   ██║██████╔╝██║     ██║██║         ███████║██████╔╝██║
-; ██╔═══╝ ██║   ██║██╔══██╗██║     ██║██║         ██╔══██║██╔═══╝ ██║
-; ██║     ╚██████╔╝██████╔╝███████╗██║╚██████╗    ██║  ██║██║     ██║
-; ╚═╝      ╚═════╝ ╚═════╝ ╚══════╝╚═╝ ╚═════╝    ╚═╝  ╚═╝╚═╝     ╚═╝
-
-; Start the nipple squirt effect on the given 'actorRef' using the given squirt
-; 'level' in the range [0..2].
-; If there are already 10 actors with an active effect the call will be ignored.
-; If the given 'actorRef' already has the nipple squirt effect running the call
-; will be ignored.
-; If the "Nipple Leak" feature is enabled in the MCM this function will also
-; start the nipple leak overlay.
 
 Function StartNippleSquirt(Actor actorRef, int level=0)
   if !actorRef
@@ -510,12 +557,26 @@ Function FixStuckEffects()
     int i = 0
     while i < actorCount
       Actor cellActor = playerCell.GetNthRef(i, 43) as Actor
-      if cellActor && cellActor.IsEquipped(NippleSquirtArmor)
-        bool isTracked = IsActorInArray(cellActor, armorActors)
-        if !isTracked
-          ForceStopNippleSquirt(cellActor)
-          fixedCount += 1
-          Debug.Trace("Fixed " + cellActor.GetDisplayName())
+      if cellActor
+        ; Check for equipped armor
+        if cellActor.IsEquipped(NippleSquirtArmor)
+          bool isTracked = IsActorInArray(cellActor, armorActors)
+          if !isTracked
+            ForceStopNippleSquirt(cellActor)
+            fixedCount += 1
+            Debug.Trace("Fixed equipped armor on " + cellActor.GetDisplayName())
+          endif
+        endif
+        
+        ; Check for unequipped armor in inventory
+        int itemCount = cellActor.GetItemCount(NippleSquirtArmor)
+        if itemCount > 0
+          bool isTracked = IsActorInArray(cellActor, armorActors)
+          if !isTracked
+            cellActor.RemoveItem(NippleSquirtArmor, itemCount)
+            fixedCount += 1
+            Debug.Trace("Removed " + itemCount + " unequipped armor from " + cellActor.GetDisplayName())
+          endif
         endif
       endif
       i += 1
